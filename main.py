@@ -2,6 +2,7 @@ import operator as op
 class Expression:
   'An Expression class, which takes in either an integer between 0-9 as the operands, or another instance of the expression class, as well as the operator.'
   def __init__(self, operand1, operator, operand2):
+    self.operator = operator
     if type(operand1) == Expression:
       self.X = operand1.evaluate()
     else:
@@ -11,16 +12,18 @@ class Expression:
     else:
       self.Y = operand2
     if operator == '+':
-      self.operator = op.add
+      self.operation = op.add
     elif operator == '-':
-      self.operator = op.sub
+      self.operation = op.sub
     elif operator == '/':
-      self.operator = op.truediv
+      self.operation = op.truediv
       #remember to validate divisions.
     elif operator == '*':
-      self.operator = op.mul
+      self.operation = op.mul
 
     self.type = (type(operand1), type(operand2))
+  def __str__(self):
+    return f'{self.X} {self.operator} {self.Y}'
   def is_valid(self):
     'Checks if the expression is valid.'
     if (type(self.operator(self.X, self.Y)) is int) or (type(self.operator(self.X, self.Y)) is float):
@@ -30,7 +33,7 @@ class Expression:
   def evaluate(self):
     'Evaluates the operation in the instance.'
     try:
-      return self.operator(self.X, self.Y)
+      return self.operation(self.X, self.Y)
     except:
       print('Error')
 
@@ -75,7 +78,6 @@ class Parser:
     self.expressions = ArrayStack()
   def parseString(self, input):
     'Parses an expression written as a string.'
-    self.expressions.empty()
     self.input = input.replace(" ", "")#removes whitespace from string.
     self.bracketStack = ArrayStack()
     self.operatorStack = ArrayStack()
@@ -102,13 +104,12 @@ class Parser:
               op2 = valid[operatorloc[0]+1: -1]
               if abs(i-j) >= 4 and len(operatorloc) == 1 and (op1.isdigit() == True and op2.isdigit() == True):
                   print('Shortest expression = ', valid)
-                  shortest = valid
                   e = Expression(int(op1), valid[operatorloc[0]], int(op2))
                   output = e.evaluate()
+
                   if len(self.bracketStack) > 2:
-                    return self.parseString(self.input.replace(shortest, str(output)))
-                  self.expressions.push(e)
-                  return output
+                    return self.parseString(self.input.replace(valid, str(output)))
+                  return 'The calculated output = ' + str(output)
             else:
                 pass
 
@@ -124,9 +125,11 @@ class Parser:
       return True
 
 
+
 if __name__ == "__main__":
   p = Parser()
   print(p.parseString('((2+2)*3)'))
   print(p.parseString('((2*4)*(3+2))'))
-  print(p.parseString('(((2 * (3+2)) + 5)/2)'))
+  #print(p.parseString('(((2 * (3+2)) + 5)/2)'))
+
 
