@@ -66,64 +66,56 @@ class ArrayStack:
     if self.isempty():
       return False
     return self.data.pop() # remove last item from list
+  def empty(self):
+    '''Clears the stack.'''
+    self.data = []
 class Parser:
   def __init__(self):
+    self.input = ''
+    self.expressions = ArrayStack()
+  def parseString(self, input):
+    'Parses an expression written as a string.'
+    self.expressions.empty()
+    self.input = input.replace(" ", "")#removes whitespace from string.
     self.bracketStack = ArrayStack()
     self.operatorStack = ArrayStack()
-    self.input = ''
-  def parseString(self, input):
-    self.input = input.replace(" ", "")#removes whitespace from string.
-    'Parses an expression written as a string.'
     operators = ['+', '-', '*', '/']
     for x in range(len(self.input)):
-      if input[x] == '(':
+      if self.input[x] == '(':
         self.bracketStack.push(x)
-      elif input[x] == ')':
+      elif self.input[x] == ')':
         self.bracketStack.push(x)
-        #handle )( somehow.
-      if input[x] in operators:
+      if self.input[x] in operators:
         self.operatorStack.push(x)#get the indexes of the operators.
 
-    print(self.operatorStack.data)
+    #print(self.operatorStack.data)
     
     if self.validateString() == True:
       #Parsing of the expression.
-      expressions = ArrayStack() 
-      print(self.bracketStack.data)
-
       for i in self.bracketStack.data:
         for j in self.bracketStack.data:
-          diff = abs(i - j)
-          if i != j and i < j and diff > 2:
-            expression = self.input[i:j+1]
-            if '(' in expression and ')' in expression:
-              print(expression)
-              print(diff)
-              #any expression with a 4 difference, must be a valid expression right off the bat. 
-              if diff == 4:
-                expression = expression.replace('(', '')
-                expression = expression.replace(')', '')
-                print(expression)
-                op1 = expression[0]
-                operator = expression[1]
-                op2 = expression[2]
-                newExp = Expression(op1, operator, op2)
-                expressions.push(newExp)
+          if i != j and abs(i-j) > 2 and i < j:
+            valid = self.input[i:j+1]
+            if '(' in valid and ')' in valid:
+              operatorloc = [x for x in range(len(valid)) if valid[x] in ['+', '-', '*', '/']] 
+              op1 = valid[1:operatorloc[0]]
+              op2 = valid[operatorloc[0]+1: -1]
+              if abs(i-j) >= 4 and len(operatorloc) == 1 and (op1.isdigit() == True and op2.isdigit() == True):
+                  print('Shortest expression = ', valid)
+                  shortest = valid
+                  e = Expression(int(op1), valid[operatorloc[0]], int(op2))
+                  output = e.evaluate()
+                  if len(self.bracketStack) > 2:
+                    return self.parseString(self.input.replace(shortest, str(output)))
+                  self.expressions.push(e)
+                  return output
+            else:
+                pass
 
-      print(expressions.data)
-
-
-
-
-
-
-    
-    
   def validateString(self):
-    #Validation
+    '''Validates the string.'''
     if len(self.bracketStack) % 2 != 0:
       raise Exception('Not a valid expression, brackets mismatched.')
-      return False
     elif len(self.operatorStack) < len(self.bracketStack) / 2:
       raise Exception('Not a valid expression, operator missing.')
     elif len(self.operatorStack) != len(self.bracketStack) / 2:
@@ -134,7 +126,7 @@ class Parser:
 
 if __name__ == "__main__":
   p = Parser()
-  #p.replaceString('(2*4)*(3+2)')
-  p.parseString('((2+2)*3)')
-  """ p.parse('(((2 * (3+2)) + 5)/2)')  """
+  print(p.parseString('((2+2)*3)'))
+  print(p.parseString('((2*4)*(3+2))'))
+  print(p.parseString('(((2 * (3+2)) + 5)/2)'))
 
