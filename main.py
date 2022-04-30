@@ -36,45 +36,8 @@ class Expression:
 
     
     
-#destructuring the expression (((2 x (3+2)) + 5)/2)
-e1 = Expression(3,'+',2)
-e2 = Expression(2, '*', e1)
-e3 = Expression(e2, '+', 5)
-e4 = Expression(e3, '/', 2)
 
 
-""" print(e.evaluate())
-print(f.evaluate())
-print(g.evaluate()) """
-
-class Parser:
-  def __init__(self, input):
-    self.input = input.replace(" ", "")#removes whitespace from string.
-    self.bracketStack = ArrayStack()
-    self.operatorStack = ArrayStack()
-  def parse(self):
-    'Parses an expression written as a string.'
-    operators = ['+', '-', '*', '/']
-    for x in range(len(self.input)):
-      if self.input[x] == '(':
-        self.bracketStack.push(self.input[x])
-      elif self.input[x] == ')':
-        self.bracketStack.push(self.input[x])
-        #handle )( somehow.
-
-
-      if self.input[x] in operators:
-        self.operatorStack.push(self.input[x])
-    print(self.operatorStack.data)
-
-    if len(self.bracketStack) % 2 != 0:
-      raise Exception('Not a valid expression, brackets mismatched.')
-    if len(self.operatorStack) < len(self.bracketStack) / 2:
-      raise Exception('Not a valid expression, operator missing.')
-    if len(self.operatorStack) != len(self.bracketStack) / 2:
-      raise Exception('Not a valid expression, wrong number of operands.')
-  def replaceString(self, input):
-    self.input = input.replace(" ", "")#removes whitespace from string.
 class ArrayStack:
   '''LIFO Stack implementation using a Python list as underlying storage. Taken from the Goodrich Data Structures and Algorithms in Python book, Chapter 6.'''
   def __init__(self):
@@ -102,9 +65,76 @@ class ArrayStack:
     Raise Empty exception if the stack is empty. '''
     if self.isempty():
       return False
-    return self.data.pop( ) # remove last item from list
+    return self.data.pop() # remove last item from list
+class Parser:
+  def __init__(self):
+    self.bracketStack = ArrayStack()
+    self.operatorStack = ArrayStack()
+    self.input = ''
+  def parseString(self, input):
+    self.input = input.replace(" ", "")#removes whitespace from string.
+    'Parses an expression written as a string.'
+    operators = ['+', '-', '*', '/']
+    for x in range(len(self.input)):
+      if input[x] == '(':
+        self.bracketStack.push(x)
+      elif input[x] == ')':
+        self.bracketStack.push(x)
+        #handle )( somehow.
+      if input[x] in operators:
+        self.operatorStack.push(x)#get the indexes of the operators.
+
+    print(self.operatorStack.data)
+    
+    if self.validateString() == True:
+      #Parsing of the expression.
+      expressions = ArrayStack() 
+      print(self.bracketStack.data)
+
+      for i in self.bracketStack.data:
+        for j in self.bracketStack.data:
+          diff = abs(i - j)
+          if i != j and i < j and diff > 2:
+            expression = self.input[i:j+1]
+            if '(' in expression and ')' in expression:
+              print(expression)
+              print(diff)
+              #any expression with a 4 difference, must be a valid expression right off the bat. 
+              if diff == 4:
+                expression = expression.replace('(', '')
+                expression = expression.replace(')', '')
+                print(expression)
+                op1 = expression[0]
+                operator = expression[1]
+                op2 = expression[2]
+                newExp = Expression(op1, operator, op2)
+                expressions.push(newExp)
+
+      print(expressions.data)
 
 
-p = Parser('(((2 * (3+2)) + 5)/2)')
-#p.replaceString('(2*4)*(3+2)')
-p.parse()
+
+
+
+
+    
+    
+  def validateString(self):
+    #Validation
+    if len(self.bracketStack) % 2 != 0:
+      raise Exception('Not a valid expression, brackets mismatched.')
+      return False
+    elif len(self.operatorStack) < len(self.bracketStack) / 2:
+      raise Exception('Not a valid expression, operator missing.')
+    elif len(self.operatorStack) != len(self.bracketStack) / 2:
+      raise Exception('Not a valid expression, wrong number of operands.')
+    else: 
+      return True
+
+
+if __name__ == "__main__":
+  p = Parser()
+  #p.replaceString('(2*4)*(3+2)')
+  p.parseString('((2+2)*3)')
+  """ p.parse('(((2 * (3+2)) + 5)/2)')  """
+
