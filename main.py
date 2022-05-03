@@ -1,4 +1,5 @@
 import operator as op
+from tree import ExpressionTree, build_expression_tree, tokenize
 class Expression:
   'An Expression class, which takes in either an integer between 0-9 as the operands, or another instance of the expression class, as well as the operator.'
   def __init__(self, operand1, operator, operand2):
@@ -24,12 +25,6 @@ class Expression:
     self.type = (type(operand1), type(operand2))
   def __str__(self):
     return f'{self.X} {self.operator} {self.Y}'
-  def is_valid(self):
-    'Checks if the expression is valid.'
-    if (type(self.operator(self.X, self.Y)) is int) or (type(self.operator(self.X, self.Y)) is float):
-      return True
-    else: 
-      return False
   def evaluate(self):
     'Evaluates the operation in the instance.'
     try:
@@ -76,8 +71,12 @@ class Parser:
   def __init__(self):
     self.input = ''
     self.expressions = ArrayStack()
-  def parseString(self, input):
+    self.originalstring = ''
+  def parseString(self, input, original=False):
+
     'Parses an expression written as a string.'
+    if original == True:
+      self.originalstring = input
     self.input = input.replace(" ", "")#removes whitespace from string.
     self.bracketStack = ArrayStack()
     self.operatorStack = ArrayStack()
@@ -103,13 +102,13 @@ class Parser:
               op1 = valid[1:operatorloc[0]]
               op2 = valid[operatorloc[0]+1: -1]
               if abs(i-j) >= 4 and len(operatorloc) == 1 and (op1.isdigit() == True and op2.isdigit() == True):
-                  print('Shortest expression = ', valid)
+                  #print('Shortest expression = ', valid)
                   e = Expression(int(op1), valid[operatorloc[0]], int(op2))
                   output = e.evaluate()
 
                   if len(self.bracketStack) > 2:
                     return self.parseString(self.input.replace(valid, str(output)))
-                  return 'The calculated output = ' + str(output)
+                  return output
             else:
                 pass
 
@@ -123,13 +122,37 @@ class Parser:
       raise Exception('Not a valid expression, wrong number of operands.')
     else: 
       return True
+  def createExpressionTree(self):
+    token = tokenize(self.originalstring)
+    newTree = build_expression_tree(token)
+    return newTree
+  def displayTree(self):
+    tree = self.createExpressionTree()
+    treelist = []
+    for i in tree.positions():
+      treelist.append(tree.depth(i) * '  ' + str(i.element()))
+    return treelist
+
+  
+
 
 
 
 if __name__ == "__main__":
   p = Parser()
-  print(p.parseString('((2+2)*3)'))
-  print(p.parseString('((2*4)*(3+2))'))
-  #print(p.parseString('(((2 * (3+2)) + 5)/2)'))
+  expression = str(input('Please enter an expression. '))
+  evaluation = p.parseString(expression, True)
+  if p.validateString() == True:
+    tree = p.displayTree()
+  else: 
+    raise Exception('String not valid.')
+  print(f'The result for the expression {p.originalstring} is {evaluation}')
+  print(f'The expression tree for the string {p.originalstring} is: ')
+  for x in tree:
+    print(x)
 
+  """ print(p.parseString('((2*4)*(3+2))'))
+  #print(p.parseString('(((2 * (3+2)) + 5)/2)'))
+  print(p.parseString('(((3+1)*4)/((9-5)+2))'))
+ """
 
