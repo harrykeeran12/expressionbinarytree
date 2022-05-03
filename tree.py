@@ -20,21 +20,9 @@ class LinkedQueue:
     self._tail = None
     self._size = 0                          # number of queue elements
 
-  def __len__(self):
-    """Return the number of elements in the queue."""
-    return self._size
-
   def is_empty(self):
     """Return True if the queue is empty."""
     return self._size == 0
-
-  def first(self):
-    """Return (but do not remove) the element at the front of the queue.
-    Raise Empty exception if the queue is empty.
-    """
-    if self.is_empty():
-      raise Exception('Queue is empty')
-    return self._head._element              # front aligned with head of list
 
   def dequeue(self):
     """Remove and return the first element of the queue (i.e., FIFO).
@@ -123,10 +111,6 @@ class Tree:
     else:
       return 1 + self.depth(self.parent(p))
 
-  def _height1(self):                 # works, but O(n^2) worst-case time
-    """Return the height of the tree."""
-    return max(self.depth(p) for p in self.positions() if self.is_leaf(p))
-
   def _height2(self, p):                  # time is linear in size of subtree
     """Return the height of the subtree rooted at Position p."""
     if self.is_leaf(p):
@@ -141,11 +125,6 @@ class Tree:
     if p is None:
       p = self.root()
     return self._height2(p)        # start _height2 recursion
-
-  def __iter__(self):
-    """Generate an iteration of the tree's elements."""
-    for p in self.positions():                        # use same order as positions()
-      yield p.element()                               # but yield each element
 
   def positions(self):
     """Generate an iteration of the tree's positions."""
@@ -164,29 +143,6 @@ class Tree:
       for other in self._subtree_preorder(c):         # do preorder of c's subtree
         yield other                                   # yielding each to our caller
 
-  def postorder(self):
-    """Generate a postorder iteration of positions in the tree."""
-    if not self.is_empty():
-      for p in self._subtree_postorder(self.root()):  # start recursion
-        yield p
-
-  def _subtree_postorder(self, p):
-    """Generate a postorder iteration of positions in subtree rooted at p."""
-    for c in self.children(p):                        # for each child c
-      for other in self._subtree_postorder(c):        # do postorder of c's subtree
-        yield other                                   # yielding each to our caller
-    yield p                                           # visit p after its subtrees
-
-  def breadthfirst(self):
-    """Generate a breadth-first iteration of the positions of the tree."""
-    if not self.is_empty():
-      fringe = LinkedQueue()             # known positions not yet yielded
-      fringe.enqueue(self.root())        # starting with the root
-      while not fringe.is_empty():
-        p = fringe.dequeue()             # remove from front of the queue
-        yield p                          # report this position
-        for c in self.children(p):
-          fringe.enqueue(c)              # add children to back of queue
 
 class BinaryTree(Tree):
   """Abstract base class representing a binary tree structure."""
@@ -341,59 +297,6 @@ class LinkedBinaryTree(BinaryTree):
     self._root = self._Node(e)
     return self._make_position(self._root)
 
-  def _add_left(self, p, e):
-    """Create a new left child for Position p, storing element e.
-    Return the Position of new node.
-    Raise ValueError if Position p is invalid or p already has a left child.
-    """
-    node = self._validate(p)
-    if node._left is not None:
-      raise ValueError('Left child exists')
-    self._size += 1
-    node._left = self._Node(e, node)                  # node is its parent
-    return self._make_position(node._left)
-
-  def _add_right(self, p, e):
-    """Create a new right child for Position p, storing element e.
-    Return the Position of new node.
-    Raise ValueError if Position p is invalid or p already has a right child.
-    """
-    node = self._validate(p)
-    if node._right is not None:
-      raise ValueError('Right child exists')
-    self._size += 1
-    node._right = self._Node(e, node)                 # node is its parent
-    return self._make_position(node._right)
-
-  def _replace(self, p, e):
-    """Replace the element at position p with e, and return old element."""
-    node = self._validate(p)
-    old = node._element
-    node._element = e
-    return old
-
-  def _delete(self, p):
-    """Delete the node at Position p, and replace it with its child, if any.
-    Return the element that had been stored at Position p.
-    Raise ValueError if Position p is invalid or p has two children.
-    """
-    node = self._validate(p)
-    if self.num_children(p) == 2:
-      raise ValueError('Position has two children')
-    child = node._left if node._left else node._right  # might be None
-    if child is not None:
-      child._parent = node._parent   # child's grandparent becomes parent
-    if node is self._root:
-      self._root = child             # child becomes root
-    else:
-      parent = node._parent
-      if node is parent._left:
-        parent._left = child
-      else:
-        parent._right = child
-    self._size -= 1
-    node._parent = node              # convention for deprecated node
-    return node._element
   
   def _attach(self, p, t1, t2):
     """Attach trees t1 and t2, respectively, as the left and right subtrees of the external Position p.

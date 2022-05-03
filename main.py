@@ -1,5 +1,6 @@
 import operator as op
-from tree import ExpressionTree, build_expression_tree, tokenize
+from tree import build_expression_tree, tokenize
+import pickle
 class Expression:
   'An Expression class, which takes in either an integer between 0-9 as the operands, or another instance of the expression class, as well as the operator.'
   def __init__(self, operand1, operator, operand2):
@@ -19,22 +20,18 @@ class Expression:
     elif operator == '/':
       self.operation = op.truediv
       #remember to validate divisions.
+      if operand1 == 0 or operand2 == 0:
+        raise Exception('Zero division error.')
     elif operator == '*':
       self.operation = op.mul
 
     self.type = (type(operand1), type(operand2))
-  def __str__(self):
-    return f'{self.X} {self.operator} {self.Y}'
   def evaluate(self):
     'Evaluates the operation in the instance.'
     try:
       return self.operation(self.X, self.Y)
     except:
       print('Error')
-
-    
-    
-
 
 class ArrayStack:
   '''LIFO Stack implementation using a Python list as underlying storage. Taken from the Goodrich Data Structures and Algorithms in Python book, Chapter 6.'''
@@ -123,19 +120,38 @@ class Parser:
     else: 
       return True
   def createExpressionTree(self):
+    '''Creates the expression tree.'''
     token = tokenize(self.originalstring)
     newTree = build_expression_tree(token)
     return newTree
   def displayTree(self):
+    '''Displays the binary tree, as a list.'''
     tree = self.createExpressionTree()
     treelist = []
     for i in tree.positions():
       treelist.append(tree.depth(i) * '  ' + str(i.element()))
     return treelist
-
-  
-
-
+  def pickleTree(self, tree):
+    '''Saves the binary tree using the pickle module.'''
+    try:
+      filename = str(input('Please enter a filename: '))
+      file = open(filename, 'wb')
+      pickle.dump(tree,file)
+      file.close()
+      print('File saved.')
+      return True
+    except: 
+      raise Exception('There was an error with the file.')
+  def loadTree(self):
+    '''Loads a tree. '''
+    try:
+      filename = str(input('Please enter a filename: '))
+      file = open(filename,'rb')
+      saved = pickle.load(file)
+      file.close()
+      return saved 
+    except:
+      raise Exception('File does not exist, or file cannot be opened.')
 
 
 if __name__ == "__main__":
@@ -144,12 +160,32 @@ if __name__ == "__main__":
   evaluation = p.parseString(expression, True)
   if p.validateString() == True:
     tree = p.displayTree()
+    print(f'The expression tree for the string {p.originalstring} is: ')
+    print('\n')
+    for x in tree:
+      print(x)
+    print('\n')
+    print(f'The result for the expression {p.originalstring} is {evaluation}')
+    ask = str(input('Would you like to save the tree into a file? Y/N: '))
+    if ask == 'Y':
+        p.pickleTree(tree)
+    elif ask == 'N':
+      loading = str(input('Do you want to enter a filename for a tree to be loaded? Y/N: '))
+      if loading == 'Y':
+        savedtree = p.loadTree()
+        for node in savedtree:
+          print(node)
+      elif loading == 'N':
+        print('Program closed.')
+      else: 
+        raise Exception('Invalid answer.')
+    else:
+      raise Exception('Invalid answer.')
   else: 
     raise Exception('String not valid.')
-  print(f'The result for the expression {p.originalstring} is {evaluation}')
-  print(f'The expression tree for the string {p.originalstring} is: ')
-  for x in tree:
-    print(x)
+  
+  
+  
 
   """ print(p.parseString('((2*4)*(3+2))'))
   #print(p.parseString('(((2 * (3+2)) + 5)/2)'))
