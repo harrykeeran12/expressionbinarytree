@@ -1,6 +1,13 @@
+'''
+Student ID: 52103699
+README:
+A program that converts an expression, inputted as a string, into a binary file. The code to generate the tree is taken from the Data Structures and Algorithms in Python Michael T. Goodrich, Roberto Tamassia, and Michael H. Goldwasser John Wiley & Sons, 2013 book. 
+'''
+
 import operator as op
-from tree import build_expression_tree, tokenize
 import pickle
+from tree import build_expression_tree, tokenize
+
 class Expression:
   'An Expression class, which takes in either an integer between 0-9 as the operands, or another instance of the expression class, as well as the operator.'
   def __init__(self, operand1, operator, operand2):
@@ -21,7 +28,7 @@ class Expression:
       self.operation = op.truediv
       #remember to validate divisions.
       if operand1 == 0 or operand2 == 0:
-        raise Exception('Zero division error.')
+        raise ZeroDivisionError('Operand cannot be zero / evaluates to zero.')
     elif operator == '*':
       self.operation = op.mul
 
