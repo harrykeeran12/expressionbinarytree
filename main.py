@@ -2,15 +2,17 @@
 Student Name: Hareeshan Elankeeran
 Student ID: 52103699
 README:
-A program that converts an expression, inputted as a string, into a binary tree. The code to generate the tree is taken from the Data Structures and Algorithms in Python Michael T. Goodrich, Roberto Tamassia, and Michael H. Goldwasser John Wiley & Sons, 2013 book, from the GitHub repository https://github.com/mjwestcott/Goodrich.  '''
+A program that converts an expression, inputted as a string, into a binary tree.
+To run the tests, input Y as your answer to the question. To use the program, type N. The code to generate the tree is taken from the Data Structures and Algorithms in Python Michael T. Goodrich, Roberto Tamassia, and Michael H. Goldwasser John Wiley & Sons, 2013 book, from the GitHub repository https://github.com/mjwestcott/Goodrich.  '''
 
 import operator as op
 import pickle
+import unittest
 from tree import build_expression_tree, tokenize
 
 
 class Expression:
-    'An Expression class, which takes in either an integer between 0-9 as the operands, or another instance of the expression class, as well as the operator.'
+    '''An Expression class, which takes in either an integer between 0-9 as the operands, or another instance of the expression class, as well as the operator.'''
 
     def __init__(self, operand1, operator, operand2):
         self.operator = operator
@@ -29,9 +31,9 @@ class Expression:
         elif operator == '/':
             self.operation = op.truediv
             # remember to validate divisions.
-            if operand1 == 0 or operand2 == 0:
+            if operand2 == 0:
                 raise ZeroDivisionError(
-                    'Operand cannot be zero / evaluates to zero.')
+                    'Operand cannot be zero / evaluate to zero.')
         elif operator == '*':
             self.operation = op.mul
 
@@ -87,14 +89,17 @@ class ArrayStack:
 
 class Parser:
     def __init__(self):
+        '''Create an empty parser.'''
+
         self.input = ''
         self.expressions = ArrayStack()
         self.originalstring = ''
 
     def parseString(self, expression_string, original=False):
-        'Parses an expression written as a string.'
+        'Parses an expression written as a string. Takes in the expression as a string, and a boolean value, to know if it is at the start of the recursion or not.'
         if original is True:
             self.originalstring = expression_string
+
         # removes whitespace from string.
         self.input = expression_string.replace(" ", "")
         self.bracketStack = ArrayStack()
@@ -137,11 +142,13 @@ class Parser:
     def validateString(self):
         '''Validates the expression currently stored in the original string.'''
         if len(self.bracketStack) % 2 != 0:
-            raise Exception('Not a valid expression, brackets mismatched.')
+            raise BracketMismatchError(
+                'Not a valid expression, brackets mismatched.')
         elif len(self.operatorStack) < len(self.bracketStack) / 2:
-            raise Exception('Not a valid expression, operator missing.')
+            raise MissedOperatorError(
+                'Not a valid expression, operator missing.')
         elif len(self.operatorStack) != len(self.bracketStack) / 2:
-            raise Exception(
+            raise OperandError(
                 'Not a valid expression, wrong number of operands.')
         else:
             return True
@@ -161,7 +168,7 @@ class Parser:
         return treelist
 
     def pickleTree(self, binary_tree):
-        '''Saves the binary tree using the pickle module.'''
+        '''Saves the binary tree list using the pickle module.'''
         try:
             filename = str(input('Please enter a filename: '))
             file = open(filename, 'wb')
@@ -170,10 +177,10 @@ class Parser:
             print('File saved.')
             return True
         except:
-            raise Exception('There was an error with the file.')
+            raise MiscError('There was an error with the file.')
 
     def loadTree(self):
-        '''Loads a tree. '''
+        '''Loads the tree list, from a file. '''
         try:
             filename = str(input('Please enter a filename: '))
             file = open(filename, 'rb')
@@ -181,42 +188,141 @@ class Parser:
             file.close()
             return saved
         except:
-            raise Exception('File does not exist, or file cannot be opened.')
+            raise MiscError('File does not exist, or file cannot be opened.')
+
+
+class OperandError(Exception):
+    '''An error class, derived from the Exception class.'''
+    pass
+
+
+class BracketMismatchError(Exception):
+    '''Raised if the brackets on a string are mismatched, derived from the Exception class.'''
+    pass
+
+
+class MissedOperatorError(Exception):
+    '''Raised if there is an operator missing, derived from the Exception class.'''
+    pass
+
+
+class MiscError(Exception):
+  '''A miscellaneous error. '''
+  pass
+class Testing(unittest.TestCase):
+    '''The testing class. This handles all unit tests. Uses the unittest module. '''
+
+    '''Testing if errors are thrown, when the validateString method is used in the Parser class.'''
+    def test_wrongoperand1(self):
+        self.testParser = Parser()
+        with self.assertRaises(OperandError):
+            self.testParser.parseString('(4*3*2)', True)
+
+    def test_wrongoperand2(self):
+        self.testParser = Parser()
+        with self.assertRaises((OperandError, MissedOperatorError)):
+            self.testParser.parseString('(4*(2))', True)
+
+    def test_wrongoperand3(self):
+        self.testParser = Parser()
+        with self.assertRaises(OperandError):
+            self.testParser.parseString('(4*(3+2)*(2+1))', True)
+
+    def test_bracketmismatch1(self):
+        self.testParser = Parser()
+        with self.assertRaises((BracketMismatchError, OperandError)):
+            self.testParser.parseString('(2*4)*(3+2)', True)
+
+    def test_bracketmismatch2(self):
+        self.testParser = Parser()
+        with self.assertRaises(BracketMismatchError):
+            self.testParser.parseString('((2+3)*(4*5)', True)
+
+    def test_bracketmismatch3(self):
+        self.testParser = Parser()
+        with self.assertRaises(BracketMismatchError):
+            self.testParser.parseString('(2+5)*(4/(2+2)))', True)
+
+    def test_operator1(self):
+        self.testParser = Parser()
+        with self.assertRaises(MissedOperatorError):
+            self.testParser.parseString('(((2+3)*(4*5))+(1(2+3)))')
+
+    def test_operator2(self):
+        self.testParser = Parser()
+        with self.assertRaises(MissedOperatorError):
+            self.testParser.parseString('(22)')
+
+    def test_operator3(self):
+        self.testParser = Parser()
+        with self.assertRaises(MissedOperatorError):
+            self.testParser.parseString('(8)(3)')
+
+    '''Checking if the parseString method actually evaluates to the right number.'''
+    def test_valid1(self):
+        self.testParser = Parser()
+        self.assertEqual(self.testParser.parseString('(4*5)'), 20)
+
+    def test_valid2(self):
+        self.testParser = Parser()
+        self.assertEqual(self.testParser.parseString('((2*3)*5)'), 30)
+
+    def test_valid3(self):
+        self.testParser = Parser()
+        self.assertEqual(self.testParser.parseString('((2*4)*(5*6)) '), 240)
+
+    '''Testing the Expression class. '''
+    def test_expression1(self):
+      newExpression = Expression(2, '*', 4)
+      self.assertEqual(newExpression.evaluate(), 8)
+
+    def test_expression2(self):
+      nestedExpression = Expression(9, '+', 3)
+      newExpression = Expression(nestedExpression, '*', 4)
+      self.assertEqual(newExpression.evaluate(), 48)
+
+    def test_expression3(self):
+      with self.assertRaises(ZeroDivisionError):
+        newExpression = Expression(9, '/', 0)
+    
+    
 
 
 if __name__ == "__main__":
     p = Parser()
-    expression = str(input('Please enter an expression. '))
-    evaluation = p.parseString(expression, True)
-    if p.validateString() is True:
-        tree = p.displayTree()
-        print(f'The expression tree for the string {p.originalstring} is: ')
-        print('\n')
-        for x in tree:
-            print(x)
-        print('\n')
-        print(
-            f'The result for the expression {p.originalstring} is {evaluation}')
-        ask = str(input('Would you like to save the tree into a file? Y/N: '))
-        if ask == 'Y':
-            p.pickleTree(tree)
-        elif ask == 'N':
-            loading = str(
-                input('Do you want to enter a filename for a tree to be loaded? Y/N: '))
-            if loading == 'Y':
-                savedtree = p.loadTree()
-                for node in savedtree:
-                    print(node)
-            elif loading == 'N':
-                print('Program closed.')
-            else:
-                raise Exception('Invalid answer.')
-        else:
-            raise Exception('Invalid answer.')
+    test_check = str(input('Do you want to run the tests? Y/N: '))
+    if test_check == 'Y':
+        unittest.main()
     else:
-        raise Exception('String not valid.')
+        expression = str(input('Please enter an expression. '))
+        evaluation = p.parseString(expression, True)
+        if p.validateString() is True:
+            tree = p.displayTree()
+            print(
+                f'The expression tree for the string {p.originalstring} is: ')
+            print('\n')
+            for x in tree:
+                print(x)
+            print('\n')
+            print(
+                f'The result for the expression {p.originalstring} is {evaluation}')
+            ask = str(input('Would you like to save the tree into a file? Y/N: '))
+            if ask == 'Y':
+                p.pickleTree(tree)
+            elif ask == 'N':
+                loading = str(
+                    input('Do you want to enter a filename for a tree to be loaded? Y/N: '))
+                if loading == 'Y':
+                    savedtree = p.loadTree()
+                    for node in savedtree:
+                        print(node)
+                elif loading == 'N':
+                    print('Program closed.')
+                else:
+                    raise MiscError('Invalid answer.')
+            else:
+                raise MiscError('Invalid answer.')
+        else:
+            raise MiscError('String not valid.')
 
-    """ print(p.parseString('((2*4)*(3+2))'))
-  #print(p.parseString('(((2 * (3+2)) + 5)/2)'))
-  print(p.parseString('(((3+1)*4)/((9-5)+2))'))
- """
+
